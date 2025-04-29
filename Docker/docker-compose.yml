@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: finance_db
+    ports:
+      - "5440:5440"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  app:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    container_name: python_app
+    depends_on:
+      - db
+    environment:
+      FLASK_APP: app.main
+      DB_HOST: db
+      DB_NAME: finance_db
+      DB_USER: postgres
+      DB_PASSWORD: password
+    volumes:
+      - ..:/app
+    ports:
+      - "5000:5000"
+    command: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
