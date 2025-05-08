@@ -1,43 +1,47 @@
 # TechChallenge Fase 4
 
 ## Descrição
-Esta aplicação é uma API RESTful desenvolvida em Flask que utiliza um modelo LSTM para prever o fechamento de ações com base em dados históricos. A aplicação permite que os usuários façam upload de arquivos CSV contendo os dados históricos e obtenham previsões para o fechamento do dia atual.
+Esta aplicação é uma API web desenvolvida com **Flask** que utiliza um modelo **LSTM** treinado em **TensorFlow** para prever o fechamento de ações com base em dados históricos. A aplicação permite que o usuário faça upload de um arquivo CSV e obtenha uma previsão com base nesses dados.
 
 ## Estrutura do Projeto
-A estrutura do projeto é organizada da seguinte forma:
 
 ```
-app/
-    application/
-        main.py  # Código principal da aplicação Flask
-    Docker/
-        docker-compose.yml  # Configuração do Docker Compose
-        Dockerfile  # Configuração do Docker
-        requirements.txt  # Dependências da aplicação
-
-modelTraining/
-    model_lstm.keras  # Modelo LSTM treinado
-    modelTrainingLTSM.ipynb  # Notebook para treinamento do modelo
-
-downloadData/
-    downloadData.py  # Script para download de dados históricos
-    data/
-        PETR4.SA_data.csv  # Dados históricos de exemplo
-        VALE3.SA_data.csv  # Dados históricos de exemplo
+TechChallenge_Fase4/
+│
+├── app/
+│   ├── main.py                 # Código principal da aplicação Flask
+│   ├── templates/
+│   │   └── upload.html         # Interface para upload de arquivos
+│
+├── Docker/
+│   ├── docker-compose.yml      # Configuração do Docker Compose
+│   ├── Dockerfile              # Dockerfile da aplicação
+│   └── requirements.txt        # Dependências da aplicação
+│
+├── modelTraining/
+│   ├── model_lstm.keras        # Modelo LSTM treinado
+│   └── modelTrainingLTSM.ipynb # Notebook com o treinamento do modelo
+│
+├── downloadData/
+│   ├── downloadData.py         # Script para baixar dados históricos
+│   └── data/
+│       ├── PETR4.SA_data.csv   # Exemplo de dados históricos
+│       └── VALE3.SA_data.csv   # Exemplo de dados históricos
 ```
 
 ## Funcionalidades
-- **Previsão de Fechamento de Ações**: A API utiliza um modelo LSTM para prever o fechamento de ações com base em dados históricos fornecidos pelo usuário.
-- **Upload de Arquivo CSV**: Os usuários podem fazer upload de arquivos CSV com a mesma formatação do arquivo `PETR4.SA_data.csv`.
-- **Serviço Dockerizado**: A aplicação é totalmente containerizada usando Docker e Docker Compose.
+
+- **Previsão com LSTM**: Utiliza um modelo recorrente para prever o valor de fechamento de ações com base na coluna `Close`.
+- **Upload de CSV via interface web**: Interface web simples para envio de arquivos com dados históricos.
+- **Aplicação Dockerizada**: Totalmente containerizada, facilitando testes, deploy e reprodutibilidade.
 
 ## Como Executar
 
 ### Requisitos
-- Python 3.9 ou superior
+
 - Docker e Docker Compose instalados
 
-### Passos para Execução
+### Passos
 
 1. **Clonar o Repositório**:
    ```bash
@@ -45,61 +49,54 @@ downloadData/
    cd TechChallenge_Fase4
    ```
 
-2. **Construir o Container Docker**:
+2. **Construir a Imagem Docker**:
    ```bash
-   cd app/Docker
-   docker-compose build
+   cd Docker
+   docker-compose build --no-cache
    ```
 
-3. **Iniciar o Serviço**:
+3. **Iniciar o Container**:
    ```bash
    docker-compose up
    ```
 
-4. **Acessar a Aplicação**:
-   A aplicação estará disponível em `http://localhost:5000`.
+4. **Acessar a Interface Web**:
+   Acesse a aplicação em:  
+   [http://localhost:5000](http://localhost:5000)
 
-5. **Fazer Upload de Arquivo CSV**:
-   - Acesse a página inicial da aplicação.
-   - Faça o upload de um arquivo CSV com a coluna `Close`.
-   - Receba a previsão do fechamento da ação no dia atual.
+5. **Usar a Aplicação**:
+   - Faça upload de um arquivo `.csv` com a coluna `Close`.
+   - A API retorna um JSON com a previsão do fechamento do dia atual.
 
-## Exemplo de Uso
+## Exemplo de Entrada e Saída
 
-### Requisição
-Envie um arquivo CSV com a seguinte estrutura:
+### Exemplo de CSV:
 
 | Date       | Open  | High  | Low   | Close  | Volume |
 |------------|-------|-------|-------|--------|--------|
 | 2025-01-01 | 10.00 | 10.50 | 9.80  | 10.20  | 100000 |
 | 2025-01-02 | 10.20 | 10.70 | 10.10 | 10.50  | 120000 |
 
-### Resposta
-A API retornará um JSON com a previsão do fechamento:
+### Exemplo de Resposta:
+
 ```json
 {
   "today_close_prediction": 10.75
 }
 ```
 
-## Desenvolvimento
+## Detalhes Técnicos
 
-### Treinamento do Modelo
-O modelo LSTM foi treinado utilizando o arquivo `modelTraining/modelTrainingLTSM.ipynb`. O modelo é salvo no formato `.keras` e carregado pela aplicação Flask.
+- **Modelo LSTM**: O modelo foi treinado com dados históricos e salvo no formato `.keras`. Ele está localizado em `modelTraining/model_lstm.keras`.
+- **Renderização com Jinja2**: O Flask utiliza um template HTML (`upload.html`) localizado no diretório `app/templates/`.
+- **Script de Coleta de Dados**: O script `downloadData.py` coleta dados da API do Yahoo Finance com a biblioteca `yfinance`.
 
-### Script de Download de Dados
-O script `downloadData/downloadData.py` pode ser utilizado para baixar dados históricos de ações utilizando a biblioteca `yfinance`.
+## Dependências Principais
 
-## Dependências
-As dependências da aplicação estão listadas no arquivo `requirements.txt` e incluem:
-- Flask
-- TensorFlow
-- Pandas
-- NumPy
-- yfinance
+Listadas em `Docker/requirements.txt`:
 
-## Contribuição
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests no repositório.
-
-## Licença
-Este projeto está licenciado sob a licença MIT.
+- `Flask`
+- `TensorFlow`
+- `Pandas`
+- `NumPy`
+- `yfinance`

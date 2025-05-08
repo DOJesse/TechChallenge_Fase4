@@ -9,7 +9,8 @@ services:
     environment:
       FLASK_APP: main.py
     volumes:
-      - ..:/app
+      - ../app:/app
+      - ../modelTraining:/app/model  # Se seu modelo estiver aqui
     ports:
       - "5000:5000"
     command: ["python", "main.py"]
