@@ -9,9 +9,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def download_petrobras_data():
     try:
         # Configurações para coleta de dados
-        symbol = 'VALE3.SA'
-        start_date = '2000-01-01'
-        end_date = '2025-05-01'
+        symbol = 'ITUB4.SA'
+        start_date = '2024-01-01'
+        end_date = '2025-05-13'
 
         # Coleta de dados
         logging.info(f"Baixando dados para {symbol} de {start_date} até {end_date}...")
