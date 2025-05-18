@@ -37,6 +37,7 @@ O fluxo completo inclui:
 │   └── requirements.txt
 │
 └── README.md                        # Este arquivo
+```
 
 ---
 
