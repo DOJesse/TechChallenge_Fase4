@@ -11,29 +11,32 @@ O fluxo completo inclui:
 ---
 
 ## 📂 Estrutura do Projeto
-\`\`\`
+
+```text
 ├── downloadData/
 │   ├── data/
 │   │   └── <SYMBOL>_data.csv        # Dados históricos baixados
 │   └── downloadData.py              # Script de download de dados
 │
 ├── modelTraining/
-│   └── model_lstm.py                # Script de treino do modelo LSTM
+│   └── train_lstm.py                # Script de treino do modelo LSTM
 │
 ├── app/
 │   ├── main.py                      # Código principal da API Flask
 │   ├── upload.html                  # Formulário de upload CSV
 │   └── model/
-│       ├── model_lstm.keras         # Modelo treinado
-│       └── scaler.pkl               # Scaler para normalização
+│       └── model_lstm.keras         # Modelo treinado
 │
-├── Docker/
-│   ├── Dockerfile                   # Imagem da API Python
-│   ├── docker-compose.yml           # Orquestração: python_app, prometheus, grafana
-│   └── requirements.txt             # Dependências Python
+├── grafana/                         # Dashboards e provisioning do Grafana
+│   ├── dashboards/
+│   └── provisioning/
+│
+├── Docker/                          # Dockerfile da API Flask
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── requirements.txt
 │
 └── README.md                        # Este arquivo
-\`\`\`
 
 ---
 
