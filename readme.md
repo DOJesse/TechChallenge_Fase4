@@ -1,102 +1,171 @@
-# TechChallenge Fase 4
+# Tech Challenge Fase 4
 
-## Descrição
-Esta aplicação é uma API web desenvolvida com **Flask** que utiliza um modelo **LSTM** treinado em **TensorFlow** para prever o fechamento de ações com base em dados históricos. A aplicação permite que o usuário faça upload de um arquivo CSV e obtenha uma previsão com base nesses dados.
+## 📖 Descrição
+Esta aplicação é uma **API RESTful** desenvolvida em Flask que utiliza um modelo **LSTM** para prever o fechamento de ações com base em dados históricos.  
+O fluxo completo inclui:  
+1. **Download** dos dados de mercado com `yfinance`.  
+2. **Pré-processamento** e **treinamento** do modelo LSTM.  
+3. **Deploy** da API para receber CSVs de histórico e retornar previsões.  
+4. **Monitoramento** em produção via Prometheus & Grafana.
 
-## Estrutura do Projeto
+---
 
-```
-TechChallenge_Fase4/
-│
-├── app/
-│   ├── main.py                 # Código principal da aplicação Flask
-│   ├── templates/
-│   │   └── upload.html         # Interface para upload de arquivos
-│
-├── Docker/
-│   ├── docker-compose.yml      # Configuração do Docker Compose
-│   ├── Dockerfile              # Dockerfile da aplicação
-│   └── requirements.txt        # Dependências da aplicação
+## 📂 Estrutura do Projeto
+\`\`\`
+├── downloadData/
+│   ├── data/
+│   │   └── <SYMBOL>_data.csv        # Dados históricos baixados
+│   └── downloadData.py              # Script de download de dados
 │
 ├── modelTraining/
-│   ├── model_lstm.keras        # Modelo LSTM treinado
-│   └── modelTrainingLTSM.ipynb # Notebook com o treinamento do modelo
+│   └── model_lstm.py                # Script de treino do modelo LSTM
 │
-├── downloadData/
-│   ├── downloadData.py         # Script para baixar dados históricos
-│   └── data/
-│       ├── PETR4.SA_data.csv   # Exemplo de dados históricos
-│       └── VALE3.SA_data.csv   # Exemplo de dados históricos
-```
+├── app/
+│   ├── main.py                      # Código principal da API Flask
+│   ├── upload.html                  # Formulário de upload CSV
+│   └── model/
+│       ├── model_lstm.keras         # Modelo treinado
+│       └── scaler.pkl               # Scaler para normalização
+│
+├── Docker/
+│   ├── Dockerfile                   # Imagem da API Python
+│   ├── docker-compose.yml           # Orquestração: python_app, prometheus, grafana
+│   └── requirements.txt             # Dependências Python
+│
+└── README.md                        # Este arquivo
+\`\`\`
 
-## Funcionalidades
+---
 
-- **Previsão com LSTM**: Utiliza um modelo recorrente para prever o valor de fechamento de ações com base na coluna `Close`.
-- **Upload de CSV via interface web**: Interface web simples para envio de arquivos com dados históricos.
-- **Aplicação Dockerizada**: Totalmente containerizada, facilitando testes, deploy e reprodutibilidade.
+## ⚙️ Pré-requisitos
+- Docker & Docker Compose  
+- Python 3.8+ (se for treinar localmente)
 
-## Como Executar
+---
 
-### Requisitos
+## 🚀 Passo a Passo
 
-- Docker e Docker Compose instalados
+### 1. Baixar dados históricos
+\`\`\`bash
+cd downloadData
+python downloadData.py
+\`\`\`
+Isso gera um CSV em \`downloadData/data/<SYMBOL>_data.csv\`.
 
-### Passos
+### 2. Treinar o modelo LSTM (opcional)
+\`\`\`bash
+cd modelTraining
+python train_lstm.py
+\`\`\`
+O script consome o CSV, faz pré-processamento, cria sequências, treina e salva:
+- \`app/model/model_lstm.keras\`  
+- \`app/model/scaler.pkl\`
 
-1. **Clonar o Repositório**:
-   ```bash
-   git clone <url-do-repositorio>
-   cd TechChallenge_Fase4
-   ```
+### 3. Subir toda a stack em containers
+\`\`\`bash
+cd Docker
+docker-compose up --build
+\`\`\`
+- **API Flask** ➜ http://localhost:5000  
+- **Prometheus** ➜ http://localhost:9090  
+- **Grafana** ➜ http://localhost:3000  
 
-2. **Construir a Imagem Docker**:
-   ```bash
-   cd Docker
-   docker-compose build --no-cache
-   ```
+---
 
-3. **Iniciar o Container**:
-   ```bash
-   docker-compose up
-   ```
+## 📡 Uso da API
 
-4. **Acessar a Interface Web**:
-   Acesse a aplicação em:  
-   [http://localhost:5000](http://localhost:5000)
+1. Acesse a página de upload:  
+   http://localhost:5000/  
+2. Envie um arquivo CSV com colunas \`Date, Open, High, Low, Close, Volume\`.  
+3. Receba o JSON com a previsão do preço de fechamento.
 
-5. **Usar a Aplicação**:
-   - Faça upload de um arquivo `.csv` com a coluna `Close`.
-   - A API retorna um JSON com a previsão do fechamento do dia atual.
+---
 
-## Exemplo de Entrada e Saída
+## 📊 Monitoramento & Dashboards Grafana
 
-### Exemplo de CSV:
+Para rastrear em produção o **tempo de resposta** e a **utilização de recursos**, crie estes painéis no Grafana:
 
-| Date       | Open  | High  | Low   | Close  | Volume |
-|------------|-------|-------|-------|--------|--------|
-| 2025-01-01 | 10.00 | 10.50 | 9.80  | 10.20  | 100000 |
-| 2025-01-02 | 10.20 | 10.70 | 10.10 | 10.50  | 120000 |
+### 1. Infraestrutura do Processo Python
+- **CPU do processo (média 5m)**
+  \`\`\`promql
+  rate(process_cpu_seconds_total[5m])
+  \`\`\`
 
-### Exemplo de Resposta:
+   *Mostra a taxa de uso de CPU do processo Python, permitindo identificar picos de consumo.*
 
-```json
-{
-  "today_close_prediction": 10.75
-}
-```
+- **Memória residente (RSS)**
+  \`\`\`promql
+  process_resident_memory_bytes
+  \`\`\`
 
-## Detalhes Técnicos
+  *Exibe em bytes a memória RAM ocupada pelo processo, útil para detectar vazamentos.*
 
-- **Modelo LSTM**: O modelo foi treinado com dados históricos e salvo no formato `.keras`. Ele está localizado em `modelTraining/model_lstm.keras`.
-- **Renderização com Jinja2**: O Flask utiliza um template HTML (`upload.html`) localizado no diretório `app/templates/`.
-- **Script de Coleta de Dados**: O script `downloadData.py` coleta dados da API do Yahoo Finance com a biblioteca `yfinance`.
+- **Coletas de Garbage Collector (GC) por minuto**
+  \`\`\`promql
+  rate(python_gc_objects_collected_total[1m])
+  \`\`\`
 
-## Dependências Principais
+  *Indica quantos objetos o Garbage Collector liberou por minuto, mostrando carga de coleta.*
 
-Listadas em `Docker/requirements.txt`:
+### 2. Métricas HTTP da API
+- **Taxa de requisições (1m)**
+  \`\`\`promql
+  sum(rate(http_requests_total[1m])) by (method, status)
+  \`\`\`
 
-- `Flask`
-- `TensorFlow`
-- `Pandas`
-- `NumPy`
-- `yfinance`
+  *Quantidade de chamadas HTTP por segundo, agrupadas por método e código de status.*
+
+- **Latência HTTP – 95º percentil (5m)**
+  \`\`\`promql
+  histogram_quantile(
+    0.95,
+    sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+  )
+  \`\`\`
+
+  *Tempo de resposta no percentil 95, útil para identificar casos de alta latência.*
+
+### 3. Métricas de Inferência do Modelo
+- **Latência de inferência – mediana (50º)**
+  \`\`\`promql
+  histogram_quantile(
+    0.50,
+    sum(rate(model_inference_duration_seconds_bucket[5m])) by (le)
+  )
+  \`\`\`
+
+  *Mostra o tempo de inferência do modelo no median, indicando desempenho geral e piores casos.*
+
+- **Latência de inferência – 95º percentil (5m)**
+  \`\`\`promql
+  histogram_quantile(
+    0.95,
+    sum(rate(model_inference_duration_seconds_bucket[5m])) by (le)
+  )
+  \`\`\`
+
+  *Mostra o tempo de inferência do modelo no 95º percentil, indicando desempenho geral e piores casos.*
+
+- **Taxa de predições (1m)**
+  \`\`\`promql
+  sum(rate(model_predictions_total[1m]))
+  \`\`\`
+
+  *Número de previsões do modelo por segundo, para medir throughput.*
+
+- **Erro absoluto médio (MAE) nas últimas 1h**
+  \`\`\`promql
+  avg_over_time(model_prediction_error_absolute[1h])
+  \`\`\`
+
+  *Média do erro absoluto das previsões na última hora, avaliando acurácia em produção.*
+
+---
+
+## 📝 Dicas de Organização no Grafana
+- Agrupe **CPU**, **memória** e **GC** em um painel “Health”.  
+- Coloque **taxa** e **latência HTTP** em “API Performance”.  
+- Separe as **métricas de inferência** em “Model Monitoring”.  
+- Ajuste o intervalo de avaliação (e.g. 5m, 1h) conforme a granularidade desejada.
+
+---
