@@ -22,10 +22,18 @@ O fluxo completo inclui:
 │   └── train_lstm.py                # Script de treino do modelo LSTM
 │
 ├── app/
-│   ├── main.py                      # Código principal da API Flask
-│   ├── upload.html                  # Formulário de upload CSV
-│   └── model/
-│       └── model_lstm.keras         # Modelo treinado
+│   ├── api/
+│   │   └── app.py                   # Código principal da API Flask
+│   ├── models/
+│   │   └── lstm_model.py           # Implementação do modelo LSTM
+│   ├── services/
+│   │   └── prediction_service.py    # Serviço de predição
+│   ├── utils/
+│   │   └── metrics.py              # Métricas Prometheus
+│   ├── templates/
+│   │   └── upload.html             # Formulário de upload CSV
+│   ├── config.py                   # Configurações da aplicação
+│   └── pyproject.toml              # Dependências do projeto
 │
 ├── grafana/                         # Dashboards e provisioning do Grafana
 │   ├── dashboards/
@@ -44,33 +52,42 @@ O fluxo completo inclui:
 ## ⚙️ Pré-requisitos
 - Docker & Docker Compose  
 - Python 3.8+ (se for treinar localmente)
+- Poetry (para gerenciamento de dependências)
 
 ---
 
 ## 🚀 Passo a Passo
 
 ### 1. Baixar dados históricos
-\`\`\`bash
+```bash
 cd downloadData
 python downloadData.py
-\`\`\`
-Isso gera um CSV em \`downloadData/data/<SYMBOL>_data.csv\`.
+```
+Isso gera um CSV em `downloadData/data/<SYMBOL>_data.csv`.
 
 ### 2. Treinar o modelo LSTM (opcional)
-\`\`\`bash
+```bash
 cd modelTraining
 python train_lstm.py
-\`\`\`
+```
 O script consome o CSV, faz pré-processamento, cria sequências, treina e salva:
-- \`app/model/model_lstm.keras\`  
-- \`app/model/scaler.pkl\`
+- `app/model/model_lstm.keras`  
+- `app/model/scaler.pkl`
 
-### 3. Subir toda a stack em containers
-\`\`\`bash
+### 3. Executar a aplicação localmente
+```bash
+cd app
+poetry install
+poetry run python -m api.app
+```
+- **API Flask** ➜ http://localhost:5001
+
+### 4. Subir toda a stack em containers
+```bash
 cd Docker
 docker-compose up --build
-\`\`\`
-- **API Flask** ➜ http://localhost:5000  
+```
+- **API Flask** ➜ http://localhost:5001  
 - **Prometheus** ➜ http://localhost:9090  
 - **Grafana** ➜ http://localhost:3000  
 
@@ -79,8 +96,8 @@ docker-compose up --build
 ## 📡 Uso da API
 
 1. Acesse a página de upload:  
-   http://localhost:5000/  
-2. Envie um arquivo CSV com colunas \`Date, Open, High, Low, Close, Volume\`.  
+   http://localhost:5001/  
+2. Envie um arquivo CSV com colunas `Date, Open, High, Low, Close, Volume`.  
 3. Receba o JSON com a previsão do preço de fechamento.
 
 ---
@@ -91,85 +108,85 @@ Para rastrear em produção o **tempo de resposta** e a **utilização de recurs
 
 ### 1. Infraestrutura do Processo Python
 - **CPU do processo (média 5m)**
-  \`\`\`promql
+  ```promql
   rate(process_cpu_seconds_total[5m])
-  \`\`\`
+  ```
 
    *Mostra a taxa de uso de CPU do processo Python, permitindo identificar picos de consumo.*
 
 - **Memória residente (RSS)**
-  \`\`\`promql
+  ```promql
   process_resident_memory_bytes
-  \`\`\`
+  ```
 
   *Exibe em bytes a memória RAM ocupada pelo processo, útil para detectar vazamentos.*
 
 - **Coletas de Garbage Collector (GC) por minuto**
-  \`\`\`promql
+  ```promql
   rate(python_gc_objects_collected_total[1m])
-  \`\`\`
+  ```
 
   *Indica quantos objetos o Garbage Collector liberou por minuto, mostrando carga de coleta.*
 
 ### 2. Métricas HTTP da API
 - **Taxa de requisições (1m)**
-  \`\`\`promql
+  ```promql
   sum(rate(http_requests_total[1m])) by (method, status)
-  \`\`\`
+  ```
 
   *Quantidade de chamadas HTTP por segundo, agrupadas por método e código de status.*
 
 - **Latência HTTP – 95º percentil (5m)**
-  \`\`\`promql
+  ```promql
   histogram_quantile(
     0.95,
     sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
   )
-  \`\`\`
+  ```
 
   *Tempo de resposta no percentil 95, útil para identificar casos de alta latência.*
 
 ### 3. Métricas de Inferência do Modelo
 - **Latência de inferência – mediana (50º)**
-  \`\`\`promql
+  ```promql
   histogram_quantile(
     0.50,
     sum(rate(model_inference_duration_seconds_bucket[5m])) by (le)
   )
-  \`\`\`
+  ```
 
   *Mostra o tempo de inferência do modelo no median, indicando desempenho geral e piores casos.*
 
 - **Latência de inferência – 95º percentil (5m)**
-  \`\`\`promql
+  ```promql
   histogram_quantile(
     0.95,
     sum(rate(model_inference_duration_seconds_bucket[5m])) by (le)
   )
-  \`\`\`
+  ```
 
   *Mostra o tempo de inferência do modelo no 95º percentil, indicando desempenho geral e piores casos.*
 
 - **Taxa de predições (1m)**
-  \`\`\`promql
+  ```promql
   sum(rate(model_predictions_total[1m]))
-  \`\`\`
+  ```
 
   *Número de previsões do modelo por segundo, para medir throughput.*
 
 - **Erro absoluto médio (MAE) nas últimas 1h**
-  \`\`\`promql
+  ```promql
   avg_over_time(model_prediction_error_absolute[1h])
-  \`\`\`
+  ```
 
   *Média do erro absoluto das previsões na última hora, avaliando acurácia em produção.*
 
 ---
 
 ## 📝 Dicas de Organização no Grafana
-- Agrupe **CPU**, **memória** e **GC** em um painel “Health”.  
-- Coloque **taxa** e **latência HTTP** em “API Performance”.  
-- Separe as **métricas de inferência** em “Model Monitoring”.  
+- Agrupe **CPU**, **memória** e **GC** em um painel "Health".  
+- Coloque **taxa** e **latência HTTP** em "API Performance".  
+- Separe as **métricas de inferência** em "Model Monitoring".  
 - Ajuste o intervalo de avaliação (e.g. 5m, 1h) conforme a granularidade desejada.
 
 ---

@@ -2,19 +2,22 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Instala curl e limpa cache do apt
+# Instala curl, poetry e limpa cache do apt
 RUN apt-get update \
- && apt-get install -y curl \
- && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -sSL https://install.python-poetry.org | python3 -
 
-# Copia e instala dependências Python
-COPY ../requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install prometheus_client gunicorn
+# Copia arquivos de configuração do Poetry
+COPY ../app/pyproject.toml ../app/poetry.lock ./
 
-# Copia todo o código da app (incluindo app/model/model_lstm.keras)
+# Instala dependências usando Poetry
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-dev --no-interaction --no-ansi
+
+# Copia todo o código da app
 COPY ../app/ ./
 
-EXPOSE 5000
+EXPOSE 5001
 
-CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "main:app"]
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5001", "api.app:app"]
