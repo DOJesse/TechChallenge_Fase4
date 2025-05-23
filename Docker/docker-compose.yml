@@ -8,6 +8,8 @@ services:
     container_name: python_app
     ports:
       - "5001:5001"
+    networks:
+      - monitoring
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:5001/health || exit 1"]
       interval: 30s
@@ -21,6 +23,8 @@ services:
       - ../prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
+    networks:
+      - monitoring
 
   grafana:
     build:
@@ -32,6 +36,12 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: "admin" 
     depends_on:
       - prometheus
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
 
 volumes:
   # opcional, para persistir dados do Grafana

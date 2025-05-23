@@ -3,6 +3,7 @@ import pandas as pd
 from services.prediction_service import PredictionService
 from utils.metrics import start_timer, record_http_metrics, get_metrics
 from config import API_HOST, API_PORT, TEMPLATES_DIR
+from prometheus_client import CONTENT_TYPE_LATEST
 
 app = Flask(__name__, template_folder=str(TEMPLATES_DIR))
 prediction_service = PredictionService()
@@ -38,7 +39,11 @@ def predict():
 @app.route('/metrics')
 def metrics():
     """Endpoint para métricas Prometheus."""
-    return Response(*get_metrics())
+    try:
+        metrics_data, content_type = get_metrics()
+        return Response(metrics_data, content_type=content_type)
+    except Exception as e:
+        return jsonify({'error': f'Erro ao gerar métricas: {str(e)}'}), 500
 
 @app.route('/health', methods=['GET'])
 def health():
