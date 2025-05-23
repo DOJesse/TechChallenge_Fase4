@@ -40,9 +40,14 @@ def metrics():
     """Endpoint para métricas Prometheus."""
     return Response(*get_metrics())
 
+@app.route('/health', methods=['GET'])
+def health():
+    """Endpoint para verificar o status de saúde do serviço."""
+    return {"status": "healthy"}, 200
+
 def run_app():
     """Inicia a aplicação Flask."""
     app.run(host=API_HOST, port=API_PORT)
 
 if __name__ == '__main__':
-    run_app() 
+    run_app()

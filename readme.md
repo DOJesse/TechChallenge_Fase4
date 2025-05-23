@@ -91,6 +91,8 @@ docker-compose up --build
 - **Prometheus** ➜ http://localhost:9090  
 - **Grafana** ➜ http://localhost:3000  
 
+> O Docker agora utiliza o Poetry para instalar dependências e o Gunicorn como servidor WSGI. O arquivo `poetry.lock` não é obrigatório, apenas o `pyproject.toml`.
+
 ---
 
 ## 📡 Uso da API
