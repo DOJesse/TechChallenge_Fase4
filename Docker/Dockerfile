@@ -20,6 +20,11 @@ RUN poetry config virtualenvs.create false \
 # Copia todo o código da app
 COPY ../app/ ./
 
-EXPOSE 5001
+# Dá permissão de execução ao script de inicialização
+RUN chmod +x start.sh
 
-CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5001", "api.app:app"]
+# Expõe as portas necessárias
+EXPOSE 5001 8501
+
+# Usa o script como ponto de entrada
+CMD ["./start.sh"]
