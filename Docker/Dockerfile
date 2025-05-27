@@ -17,6 +17,9 @@ COPY ../app/pyproject.toml ./
 RUN poetry config virtualenvs.create false \
     && poetry install --no-root --no-interaction --no-ansi
 
+# Ensure yfinance is installed
+RUN pip install yfinance
+
 # Copia todo o código da app
 COPY ../app/ ./
 
