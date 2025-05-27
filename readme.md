@@ -6,7 +6,7 @@ O fluxo completo inclui:
 1. **Download** dos dados de mercado com `yfinance`.  
 2. **Pré-processamento** e **treinamento** do modelo LSTM.  
 3. **Deploy** da API para receber CSVs de histórico e retornar previsões.  
-4. **Monitoramento** em produção via Prometheus & Grafana. fileciteturn1file2
+4. **Monitoramento** em produção via Prometheus & Grafana. 
 
 ---
 
@@ -52,7 +52,7 @@ O fluxo completo inclui:
 ## ⚙️ Pré-requisitos
 - Docker & Docker Compose  
 - Python 3.8+ (se for treinar localmente)  
-- Poetry (gerenciamento de dependências) fileciteturn1file2
+- Poetry (gerenciamento de dependências) 
 
 ---
 
@@ -63,7 +63,7 @@ O fluxo completo inclui:
 cd downloadData
 python downloadData.py
 ```
-Isso gera um CSV em `downloadData/data/<SYMBOL>_data.csv`. fileciteturn1file2
+Isso gera um CSV em `downloadData/data/<SYMBOL>_data.csv`. 
 
 ### 2. Treinar o modelo LSTM (opcional)
 ```bash
@@ -72,7 +72,7 @@ python train_lstm.py
 ```
 O script consome o CSV, faz pré-processamento, cria sequências, treina e salva:
 - `app/model/model_lstm.keras`  
-- `app/model/scaler.pkl` fileciteturn1file2
+- `app/model/scaler.pkl` 
 
 ### 3. Executar a aplicação localmente
 ```bash
@@ -80,7 +80,7 @@ cd app
 poetry install
 poetry run python -m api.app
 ```
-- **API Flask** ➜ http://localhost:5001 fileciteturn1file2
+- **API Flask** ➜ http://localhost:5001 
 
 ### 4. Subir toda a stack em containers
 ```bash
@@ -89,7 +89,7 @@ docker-compose up --build
 ```
 - **API Flask** ➜ http://localhost:5001  
 - **Prometheus** ➜ http://localhost:9090  
-- **Grafana** ➜ http://localhost:3000 fileciteturn1file2
+- **Grafana** ➜ http://localhost:3000 
 
 ---
 
@@ -98,7 +98,7 @@ docker-compose up --build
 ### 📁 Upload de CSV
 1. Acesse http://localhost:5001/  
 2. Envie um arquivo CSV com colunas `Date, Open, High, Low, Close, Volume`.  
-3. O JSON de resposta conterá `predicted_close`. fileciteturn1file8
+3. O JSON de resposta conterá `predicted_close`. 
 
 ### 📈 Previsão B3 (10 maiores empresas)
 1. **Via GET**  
@@ -128,7 +128,7 @@ Resposta:
 ```json
 { "company": "Vale S.A. (VALE3)", "predicted_close": 105.23 }
 ```  
- Para mais detalhes de implementação, veja `app.py` fileciteturn2file0
+ Para mais detalhes de implementação, veja `app.py` 
 
 ---
 
@@ -148,7 +148,7 @@ Para acompanhar tempo de resposta, consumo de recursos e inferência:
 - **GC por minuto**
   ```promql
   rate(python_gc_objects_collected_total[1m])
-  ``` fileciteturn1file8
+  ``` 
 
 ### Métricas HTTP da API
 - **Requisições (1m)**
@@ -158,7 +158,7 @@ Para acompanhar tempo de resposta, consumo de recursos e inferência:
 - **Latência 95º perc. (5m)**
   ```promql
   histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
-  ``` fileciteturn1file8
+  ``` 
 
 ### Métricas de Inferência do Modelo
 - **Latência inferência 50º perc.**
@@ -176,7 +176,7 @@ Para acompanhar tempo de resposta, consumo de recursos e inferência:
 - **MAE últimas 1h**
   ```promql
   avg_over_time(model_prediction_error_absolute[1h])
-  ``` fileciteturn1file8
+  ``` 
 
 ---
 
@@ -184,4 +184,4 @@ Para acompanhar tempo de resposta, consumo de recursos e inferência:
 - Agrupe **CPU**, **Memória** e **GC** em “Health”.  
 - Coloque **Requisições** e **Latência HTTP** em “API Performance”.  
 - Separe **Inferência** em “Model Monitoring”.  
-- Ajuste intervalos (e.g. 5m, 1h) conforme necessidade. fileciteturn1file17
+- Ajuste intervalos (e.g. 5m, 1h) conforme necessidade.
