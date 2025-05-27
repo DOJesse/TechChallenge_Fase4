@@ -6,7 +6,7 @@ O fluxo completo inclui:
 1. **Download** dos dados de mercado com `yfinance`.  
 2. **Pré-processamento** e **treinamento** do modelo LSTM.  
 3. **Deploy** da API para receber CSVs de histórico e retornar previsões.  
-4. **Monitoramento** em produção via Prometheus & Grafana.
+4. **Monitoramento** em produção via Prometheus & Grafana. fileciteturn1file2
 
 ---
 
@@ -25,21 +25,21 @@ O fluxo completo inclui:
 │   ├── api/
 │   │   └── app.py                   # Código principal da API Flask
 │   ├── models/
-│   │   └── lstm_model.py           # Implementação do modelo LSTM
+│   │   └── lstm_model.py            # Implementação do modelo LSTM
 │   ├── services/
 │   │   └── prediction_service.py    # Serviço de predição
 │   ├── utils/
-│   │   └── metrics.py              # Métricas Prometheus
+│   │   └── metrics.py               # Métricas Prometheus
 │   ├── templates/
-│   │   └── upload.html             # Formulário de upload CSV
-│   ├── config.py                   # Configurações da aplicação
-│   └── pyproject.toml              # Dependências do projeto
+│   │   └── upload.html              # Formulário de upload CSV
+│   ├── config.py                    # Configurações da aplicação
+│   └── pyproject.toml               # Dependências e scripts (Poetry)
 │
 ├── grafana/                         # Dashboards e provisioning do Grafana
 │   ├── dashboards/
 │   └── provisioning/
 │
-├── Docker/                          # Dockerfile da API Flask
+├── Docker/                          # Dockerfile e docker-compose
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   └── requirements.txt
@@ -51,8 +51,8 @@ O fluxo completo inclui:
 
 ## ⚙️ Pré-requisitos
 - Docker & Docker Compose  
-- Python 3.8+ (se for treinar localmente)
-- Poetry (para gerenciamento de dependências)
+- Python 3.8+ (se for treinar localmente)  
+- Poetry (gerenciamento de dependências) fileciteturn1file2
 
 ---
 
@@ -63,7 +63,7 @@ O fluxo completo inclui:
 cd downloadData
 python downloadData.py
 ```
-Isso gera um CSV em `downloadData/data/<SYMBOL>_data.csv`.
+Isso gera um CSV em `downloadData/data/<SYMBOL>_data.csv`. fileciteturn1file2
 
 ### 2. Treinar o modelo LSTM (opcional)
 ```bash
@@ -72,7 +72,7 @@ python train_lstm.py
 ```
 O script consome o CSV, faz pré-processamento, cria sequências, treina e salva:
 - `app/model/model_lstm.keras`  
-- `app/model/scaler.pkl`
+- `app/model/scaler.pkl` fileciteturn1file2
 
 ### 3. Executar a aplicação localmente
 ```bash
@@ -80,7 +80,7 @@ cd app
 poetry install
 poetry run python -m api.app
 ```
-- **API Flask** ➜ http://localhost:5001
+- **API Flask** ➜ http://localhost:5001 fileciteturn1file2
 
 ### 4. Subir toda a stack em containers
 ```bash
@@ -89,106 +89,99 @@ docker-compose up --build
 ```
 - **API Flask** ➜ http://localhost:5001  
 - **Prometheus** ➜ http://localhost:9090  
-- **Grafana** ➜ http://localhost:3000  
-
-> O Docker agora utiliza o Poetry para instalar dependências e o Gunicorn como servidor WSGI. O arquivo `poetry.lock` não é obrigatório, apenas o `pyproject.toml`.
+- **Grafana** ➜ http://localhost:3000 fileciteturn1file2
 
 ---
 
 ## 📡 Uso da API
 
-1. Acesse a página de upload:  
-   http://localhost:5001/  
+### 📁 Upload de CSV
+1. Acesse http://localhost:5001/  
 2. Envie um arquivo CSV com colunas `Date, Open, High, Low, Close, Volume`.  
-3. Receba o JSON com a previsão do preço de fechamento.
+3. O JSON de resposta conterá `predicted_close`. fileciteturn1file8
+
+### 📈 Previsão B3 (10 maiores empresas)
+1. **Via GET**  
+   ```
+   http://localhost:5001/predict_b3?company=<Empresa>
+   ```
+2. **Via POST** (JSON)
+   ```json
+   { "company": "Petrobras (PETR4)" }
+   ```
+3. Parâmetro `company` deve ser um dos nomes abaixo:
+   - Petrobras (PETR4)  
+   - Itaú Unibanco (ITUB4)  
+   - Vale S.A. (VALE3)  
+   - Ambev (ABEV3)  
+   - BTG Pactual (BPAC11)  
+   - Weg (WEGE3)  
+   - Bradesco (BBDC4)  
+   - Banco do Brasil (BBAS3)  
+   - Itaúsa (ITSA4)  
+   - Santander Brasil (SANB11)  
+4. Exemplo GET:
+   ```
+   http://localhost:5001/predict_b3?company=Vale%20S.A.%20(VALE3)
+   ```  
+Resposta:
+```json
+{ "company": "Vale S.A. (VALE3)", "predicted_close": 105.23 }
+```  
+ Para mais detalhes de implementação, veja `app.py` fileciteturn2file0
 
 ---
 
 ## 📊 Monitoramento & Dashboards Grafana
 
-Para rastrear em produção o **tempo de resposta** e a **utilização de recursos**, crie estes painéis no Grafana:
+Para acompanhar tempo de resposta, consumo de recursos e inferência:
 
-### 1. Infraestrutura do Processo Python
-- **CPU do processo (média 5m)**
+### Infraestrutura do Processo Python
+- **CPU (média 5m)**
   ```promql
   rate(process_cpu_seconds_total[5m])
   ```
-
-   *Mostra a taxa de uso de CPU do processo Python, permitindo identificar picos de consumo.*
-
 - **Memória residente (RSS)**
   ```promql
   process_resident_memory_bytes
   ```
-
-  *Exibe em bytes a memória RAM ocupada pelo processo, útil para detectar vazamentos.*
-
-- **Coletas de Garbage Collector (GC) por minuto**
+- **GC por minuto**
   ```promql
   rate(python_gc_objects_collected_total[1m])
-  ```
+  ``` fileciteturn1file8
 
-  *Indica quantos objetos o Garbage Collector liberou por minuto, mostrando carga de coleta.*
-
-### 2. Métricas HTTP da API
-- **Taxa de requisições (1m)**
+### Métricas HTTP da API
+- **Requisições (1m)**
   ```promql
   sum(rate(http_requests_total[1m])) by (method, status)
   ```
-
-  *Quantidade de chamadas HTTP por segundo, agrupadas por método e código de status.*
-
-- **Latência HTTP – 95º percentil (5m)**
+- **Latência 95º perc. (5m)**
   ```promql
-  histogram_quantile(
-    0.95,
-    sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
-  )
-  ```
+  histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+  ``` fileciteturn1file8
 
-  *Tempo de resposta no percentil 95, útil para identificar casos de alta latência.*
-
-### 3. Métricas de Inferência do Modelo
-- **Latência de inferência – mediana (50º)**
+### Métricas de Inferência do Modelo
+- **Latência inferência 50º perc.**
   ```promql
-  histogram_quantile(
-    0.50,
-    sum(rate(model_inference_duration_seconds_bucket[5m])) by (le)
-  )
+  histogram_quantile(0.50, sum(rate(model_inference_duration_seconds_bucket[5m])) by (le))
   ```
-
-  *Mostra o tempo de inferência do modelo no median, indicando desempenho geral e piores casos.*
-
-- **Latência de inferência – 95º percentil (5m)**
+- **Latência inferência 95º perc.**
   ```promql
-  histogram_quantile(
-    0.95,
-    sum(rate(model_inference_duration_seconds_bucket[5m])) by (le)
-  )
+  histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket[5m])) by (le))
   ```
-
-  *Mostra o tempo de inferência do modelo no 95º percentil, indicando desempenho geral e piores casos.*
-
 - **Taxa de predições (1m)**
   ```promql
   sum(rate(model_predictions_total[1m]))
   ```
-
-  *Número de previsões do modelo por segundo, para medir throughput.*
-
-- **Erro absoluto médio (MAE) nas últimas 1h**
+- **MAE últimas 1h**
   ```promql
   avg_over_time(model_prediction_error_absolute[1h])
-  ```
-
-  *Média do erro absoluto das previsões na última hora, avaliando acurácia em produção.*
+  ``` fileciteturn1file8
 
 ---
 
 ## 📝 Dicas de Organização no Grafana
-- Agrupe **CPU**, **memória** e **GC** em um painel "Health".  
-- Coloque **taxa** e **latência HTTP** em "API Performance".  
-- Separe as **métricas de inferência** em "Model Monitoring".  
-- Ajuste o intervalo de avaliação (e.g. 5m, 1h) conforme a granularidade desejada.
-
----
+- Agrupe **CPU**, **Memória** e **GC** em “Health”.  
+- Coloque **Requisições** e **Latência HTTP** em “API Performance”.  
+- Separe **Inferência** em “Model Monitoring”.  
+- Ajuste intervalos (e.g. 5m, 1h) conforme necessidade. fileciteturn1file17
