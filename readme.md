@@ -124,12 +124,10 @@ Um aplicativo em **Streamlit** foi preparado para facilitar a interação:
 
 ### Carregar CSV
 Permite carregar o arquivo CSV com o histórico de preços.  
-<!-- Insira aqui a captura de tela da página de upload de CSV -->  
 ![Upload CSV Page](assets/Upload_csv.png)
 
 ### Selecionar Ações
 Interface para selecionar as ações alvo para previsão.  
-<!-- Insira aqui a captura de tela da página de seleção de ações -->  
 ![Select Stocks Page](assets/Empresas_B3.png)
 
 ---
@@ -156,6 +154,7 @@ Para acompanhar desempenho da API e do modelo em produção:
   ```promql
   rate(python_gc_objects_collected_total[1m])
   ```
+  ![Grafana Infra](assets/Infra.png)
 
 **Métricas HTTP da API**  
 - Requisições (1m):  
@@ -166,6 +165,7 @@ Para acompanhar desempenho da API e do modelo em produção:
   ```promql
   histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
   ```
+  ![Grafana API](assets/API.png)
 
 **Métricas de Inferência do Modelo**  
 - Latência inferência 50º perc.:  
@@ -180,10 +180,11 @@ Para acompanhar desempenho da API e do modelo em produção:
   ```promql
   sum(rate(model_predictions_total[1m]))
   ```
-- **MAE últimas 1h**:  
+- MAE última 1h:  
   ```promql
   avg_over_time(model_prediction_error_absolute[1h])
   ```
+  ![Grafana Modelo](assets/Modelo.png)
 
 ---
 
