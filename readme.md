@@ -188,15 +188,6 @@ Para acompanhar desempenho da API e do modelo em produção:
 
 ---
 
-## 📦 Entregáveis
-- **Repositório Git** com todo o código-fonte  
-- **Documentação** completa (README.md, comentários no código)  
-- **Scripts/contêineres Docker** para deploy  
-- **Link para API em produção** (se disponível)  
-- **Vídeo** demonstrando e explicando o funcionamento da API 
-
----
-
 ## 📝 Observações
 - Ajuste variáveis em `config.py` para apontar `API_HOST` e `API_PORT`.  
 - Confira `pyproject.toml` para alinhar versões de dependências.  
