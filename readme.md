@@ -1,7 +1,7 @@
 # Tech Challenge Fase 4
 
 ## 📖 Descrição
-Esta aplicação é um **Tech Challenge** da Fase 4 do MLET/FIAP que demonstra uma pipeline completa de deep learning para séries temporais, usando **LSTM** para prever o preço de fechamento de ações. 
+Esta aplicação é um **Tech Challenge** da Fase 4 que demonstra uma pipeline completa de deep learning para séries temporais, usando **LSTM** para prever o preço de fechamento de ações. 
 
 ---
 
