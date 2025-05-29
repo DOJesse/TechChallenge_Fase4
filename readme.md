@@ -85,7 +85,6 @@ python train_lstm.py
 - Gera métricas de treino e validação: **MAE**, **RMSE**, **MAPE**   
 - Salva  
   - `app/models/lstm_model.keras`  
-  - `app/models/scaler.pkl`
 
 ### 3. Deploy da API
 ```bash
